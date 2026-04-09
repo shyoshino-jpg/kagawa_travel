@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>香川・高松 旅行プランナー</title>
+  <style>
+    /* ── Design tokens ── */
+    :root {
+      --primary:        #0f4c81;
+      --primary-light:  #1a6bbf;
+      --accent:         #c8900a;
+      --accent-light:   #f0b429;
+      --bg:             #f0f4f8;
+      --card:           #ffffff;
+      --text:           #1a202c;
+      --muted:          #64748b;
+      --border:         #e2e8f0;
+
+      --morning-bg:     #fef9c3;
+      --morning-bd:     #f59e0b;
+      --morning-tx:     #78350f;
+      --afternoon-bg:   #dbeafe;
+      --afternoon-bd:   #3b82f6;
+      --afternoon-tx:   #1e40af;
+      --evening-bg:     #ede9fe;
+      --evening-bd:     #8b5cf6;
+      --evening-tx:     #4c1d95;
+      --food-bg:        #dcfce7;
+      --food-bd:        #22c55e;
+      --food-tx:        #14532d;
+
+      --shadow:    0 4px 6px -1px rgba(0,0,0,.08), 0 2px 4px -1px rgba(0,0,0,.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.06);
+      --radius:    0.875rem;
+    }
+
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Meiryo',
+                   'BIZ UDGothic', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.65;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #0a3460 0%, var(--primary) 60%, #1a6bbf 100%);
+      color: #fff;
+      padding: 2.25rem 1.5rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(45deg,
+          transparent, transparent 30px,
+          rgba(255,255,255,.02) 30px, rgba(255,255,255,.02) 31px);
+      pointer-events: none;
+    }
+    header h1 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 800;
+      letter-spacing: .04em;
+      position: relative;
+    }
+    header p {
+      color: rgba(255,255,255,.75);
+      margin-top: .4rem;
+      font-size: .92rem;
+      position: relative;
+    }
+
+    /* ── Layout ── */
+    main { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+    /* ── Form card ── */
+    .form-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.75rem;
+    }
+    .form-card h2 {
+      font-size: 1.05rem;
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    @media (max-width: 560px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: .45rem; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    label { font-size: .83rem; font-weight: 700; color: var(--text); }
+
+    input[type="date"],
+    input[type="number"],
+    select {
+      padding: .6rem .85rem;
+      border: 1.5px solid var(--border);
+      border-radius: .55rem;
+      font-size: .93rem;
+      font-family: inherit;
+      background: #fff;
+      color: var(--text);
+      transition: border-color .18s, box-shadow .18s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(26,107,191,.14);
+    }
+
+    /* ── Interest chips ── */
+    .chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+    .chip input[type="checkbox"] { display: none; }
+    .chip label {
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+      padding: .35rem .85rem;
+      border: 1.5px solid var(--border);
+      border-radius: 2rem;
+      font-size: .83rem;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      transition: all .18s;
+      background: #fafafa;
+    }
+    .chip input:checked + label {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .chip label:hover { border-color: var(--primary-light); }
+
+    /* ── Generate button ── */
+    .btn-generate {
+      display: block;
+      width: 100%;
+      padding: .95rem;
+      margin-top: 1.75rem;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: #fff;
+      border: none;
+      border-radius: .7rem;
+      font-size: 1rem;
+      font-weight: 800;
+      font-family: inherit;
+      letter-spacing: .05em;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s, opacity .15s;
+    }
+    .btn-generate:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(15,76,129,.38);
+    }
+    .btn-generate:disabled { opacity: .65; cursor: not-allowed; }
+
+    /* ── Loading ── */
+    .loading {
+      display: none;
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.75rem;
+    }
+    .loading.on { display: block; }
+    .spinner {
+      width: 2.75rem; height: 2.75rem;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+      margin: 0 auto .9rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading p { color: var(--muted); font-size: .9rem; }
+    .stream-preview {
+      margin-top: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: .75rem;
+      color: var(--muted);
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: .5rem;
+      padding: .75rem 1rem;
+      max-height: 160px;
+      overflow-y: auto;
+      text-align: left;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* ── Error ── */
+    .error-box {
+      display: none;
+      background: #fef2f2;
+      border: 1.5px solid #f87171;
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      color: #b91c1c;
+      margin-bottom: 1.75rem;
+    }
+    .error-box.on { display: block; }
+    .error-box strong { display: block; margin-bottom: .25rem; }
+
+    /* ── Output ── */
+    .output { display: none; }
+    .output.on { display: block; }
+
+    /* Plan header */
+    .plan-header {
+      background: linear-gradient(135deg, #0a3460 0%, var(--primary) 100%);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 1.75rem 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-lg);
+    }
+    .plan-header h2 { font-size: 1.35rem; margin-bottom: .5rem; }
+    .plan-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem 1.25rem;
+      font-size: .87rem;
+      color: rgba(255,255,255,.82);
+    }
+    .plan-meta span { display: flex; align-items: center; gap: .3rem; }
+
+    /* Day card */
+    .day-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+    }
+    .day-head {
+      background: linear-gradient(90deg, var(--accent) 0%, var(--accent-light) 100%);
+      color: #fff;
+      padding: .9rem 1.5rem;
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+    }
+    .day-head h3 { font-size: 1.05rem; font-weight: 800; }
+    .day-theme { font-size: .82rem; opacity: .9; }
+    .day-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+
+    /* Time slots */
+    .slot { border-radius: .65rem; overflow: hidden; }
+    .slot-head {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .55rem 1rem;
+      font-size: .82rem;
+      font-weight: 800;
+    }
+    .slot-body { padding: .9rem 1rem; }
+
+    .morning  { border: 1.5px solid var(--morning-bd); }
+    .morning  .slot-head { background: var(--morning-bg);   color: var(--morning-tx); }
+    .morning  .slot-body { background: #fffdf0; }
+
+    .afternoon { border: 1.5px solid var(--afternoon-bd); }
+    .afternoon .slot-head { background: var(--afternoon-bg); color: var(--afternoon-tx); }
+    .afternoon .slot-body { background: #f0f6ff; }
+
+    .evening   { border: 1.5px solid var(--evening-bd); }
+    .evening   .slot-head { background: var(--evening-bg);   color: var(--evening-tx); }
+    .evening   .slot-body { background: #f7f5ff; }
+
+    .meal      { border: 1.5px solid var(--food-bd); }
+    .meal      .slot-head { background: var(--food-bg);      color: var(--food-tx); }
+    .meal      .slot-body { background: #f0fdf6; }
+
+    /* Spot details */
+    .spot-name { font-size: 1rem; font-weight: 800; margin-bottom: .3rem; }
+    .spot-desc { font-size: .85rem; color: var(--muted); line-height: 1.6; margin-bottom: .65rem; }
+    .badges    { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .65rem; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .25rem;
+      padding: .22rem .6rem;
+      border-radius: 1rem;
+      font-size: .78rem;
+      background: rgba(0,0,0,.06);
+      color: var(--muted);
+    }
+    .local-tip {
+      background: #fffbeb;
+      border-left: 3px solid var(--accent-light);
+      padding: .55rem .85rem;
+      border-radius: 0 .5rem .5rem 0;
+      font-size: .82rem;
+      color: #78350f;
+    }
+    .slot-note { font-size: .78rem; color: var(--muted); font-style: italic; margin-top: .5rem; }
+
+    /* Restaurant */
+    .rest-name  { font-size: 1rem; font-weight: 800; margin-bottom: .2rem; }
+    .rest-style { font-size: .85rem; color: var(--muted); margin-bottom: .55rem; }
+    .must-order {
+      display: inline-block;
+      background: #fef9c3;
+      border: 1px solid #fbbf24;
+      border-radius: .45rem;
+      padding: .3rem .75rem;
+      font-size: .82rem;
+      color: #92400e;
+      margin: .4rem 0;
+    }
+    .rest-tip { font-size: .82rem; color: var(--muted); font-style: italic; margin-top: .3rem; }
+
+    /* Tips sections */
+    .tips-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+    }
+    .tips-card h3 {
+      font-size: 1rem;
+      color: var(--primary);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+    }
+    .tips-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 1rem;
+    }
+    .tip-item {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: .65rem;
+      padding: .9rem 1rem;
+    }
+    .tip-item h4 { font-size: .88rem; font-weight: 700; color: var(--primary); margin-bottom: .3rem; }
+    .tip-item p  { font-size: .82rem; color: var(--muted); line-height: 1.55; }
+    .tip-loc     { font-size: .78rem; color: var(--accent); margin-top: .35rem; }
+
+    .list-tips { list-style: none; display: flex; flex-direction: column; gap: .5rem; }
+    .list-tips li {
+      display: flex;
+      align-items: flex-start;
+      gap: .5rem;
+      font-size: .88rem;
+      padding: .5rem .75rem;
+      background: #f8fafc;
+      border-radius: .5rem;
+    }
+    .list-tips li::before { content: '💡'; flex-shrink: 0; }
+
+    /* Raw JSON fallback */
+    .raw-json {
+      display: none;
+      background: #1e293b;
+      color: #e2e8f0;
+      font-family: 'Courier New', monospace;
+      font-size: .78rem;
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin-bottom: 1.5rem;
+    }
+    .raw-json.on { display: block; }
+
+    /* Action bar */
+    .action-bar {
+      display: none;
+      gap: .75rem;
+      margin-bottom: 1.5rem;
+    }
+    .action-bar.on { display: flex; }
+    .btn-action {
+      padding: .55rem 1.1rem;
+      border-radius: .55rem;
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font-size: .85rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      transition: all .15s;
+    }
+    .btn-action:hover { border-color: var(--primary); color: var(--primary); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🌊 香川・高松 旅行プランナー</h1>
+  <p>Claude AI が最適な高松旅行プランを作成します</p>
+</header>
+
+<main>
+
+  <!-- ── Form ── -->
+  <div class="form-card">
+    <h2>🗓️ 旅行条件を入力</h2>
+    <form id="planForm">
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label>📅 出発日</label>
+          <input type="date" id="startDate" required>
+        </div>
+
+        <div class="form-group">
+          <label>📅 最終日</label>
+          <input type="date" id="endDate" required>
+        </div>
+
+        <div class="form-group">
+          <label>👥 旅行者数</label>
+          <input type="number" id="travelers" value="2" min="1" max="20">
+        </div>
+
+        <div class="form-group">
+          <label>💰 予算レベル</label>
+          <select id="budget">
+            <option value="低予算">低予算（1人 1日 〜5,000円）</option>
+            <option value="中程度" selected>中程度（1人 1日 1〜2万円）</option>
+            <option value="高級">高級（1人 1日 3万円以上）</option>
+          </select>
+        </div>
+
+        <div class="form-group full">
+          <label>🎯 興味・関心（複数選択可）</label>
+          <div class="chips">
+            <div class="chip"><input type="checkbox" id="c1" value="グルメ・うどん" checked><label for="c1">🍜 グルメ・うどん</label></div>
+            <div class="chip"><input type="checkbox" id="c2" value="観光・名所" checked><label for="c2">🏯 観光・名所</label></div>
+            <div class="chip"><input type="checkbox" id="c3" value="自然・海・島"><label for="c3">🌊 自然・海・島</label></div>
+            <div class="chip"><input type="checkbox" id="c4" value="現代アート"><label for="c4">🎨 現代アート</label></div>
+            <div class="chip"><input type="checkbox" id="c5" value="歴史・文化"><label for="c5">📜 歴史・文化</label></div>
+            <div class="chip"><input type="checkbox" id="c6" value="ショッピング"><label for="c6">🛍️ ショッピング</label></div>
+            <div class="chip"><input type="checkbox" id="c7" value="温泉・リラックス"><label for="c7">♨️ 温泉・リラックス</label></div>
+          </div>
+        </div>
+
+      </div>
+      <button type="submit" class="btn-generate" id="genBtn">✨ プランを生成する</button>
+    </form>
+  </div>
+
+  <!-- ── Loading ── -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Claude AI が旅行プランを作成中です…</p>
+    <div class="stream-preview" id="streamPreview"></div>
+  </div>
+
+  <!-- ── Error ── -->
+  <div class="error-box" id="errorBox">
+    <strong>⚠️ エラーが発生しました</strong>
+    <span id="errorMsg"></span>
+  </div>
+
+  <!-- ── Action bar ── -->
+  <div class="action-bar" id="actionBar">
+    <button class="btn-action" id="btnDownload">⬇️ JSONをダウンロード</button>
+    <button class="btn-action" id="btnRaw">{ } 生JSONを表示</button>
+    <button class="btn-action" id="btnRegen">🔄 再生成</button>
+  </div>
+
+  <!-- ── Raw JSON ── -->
+  <pre class="raw-json" id="rawJson"></pre>
+
+  <!-- ── Rendered output ── -->
+  <div class="output" id="output"></div>
+
+</main>
+
+<script>
+  // ── default dates ──
+  const today   = new Date();
+  const in2days = new Date(today); in2days.setDate(today.getDate() + 2);
+  document.getElementById('startDate').value = fmt(today);
+  document.getElementById('endDate').value   = fmt(in2days);
+
+  function fmt(d) { return d.toISOString().split('T')[0]; }
+
+  // ── state ──
+  let lastRawJson = '';
+
+  // ── form submit ──
+  document.getElementById('planForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    await generate();
+  });
+
+  document.getElementById('btnRegen').addEventListener('click', () => generate());
+
+  document.getElementById('btnDownload').addEventListener('click', () => {
+    if (!lastRawJson) return;
+    const blob = new Blob([lastRawJson], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), { href: url, download: 'takamatsu_plan.json' });
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('btnRaw').addEventListener('click', () => {
+    const el = document.getElementById('rawJson');
+    el.classList.toggle('on');
+    document.getElementById('btnRaw').textContent = el.classList.contains('on') ? '🙈 JSONを隠す' : '{ } 生JSONを表示';
+  });
+
+  // ── main generate ──
+  async function generate() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate   = document.getElementById('endDate').value;
+    const travelers = parseInt(document.getElementById('travelers').value) || 2;
+    const budget    = document.getElementById('budget').value;
+    const interests = [...document.querySelectorAll('.chip input:checked')].map(c => c.value);
+
+    if (!startDate || !endDate) { alert('日程を選択してください'); return; }
+    if (!interests.length)      { alert('興味を1つ以上選んでください'); return; }
+
+    // UI reset
+    const genBtn = document.getElementById('genBtn');
+    genBtn.disabled = true;
+    genBtn.textContent = '⏳ 生成中…';
+    document.getElementById('loading').classList.add('on');
+    document.getElementById('output').classList.remove('on');
+    document.getElementById('output').innerHTML = '';
+    document.getElementById('errorBox').classList.remove('on');
+    document.getElementById('actionBar').classList.remove('on');
+    document.getElementById('rawJson').classList.remove('on');
+    document.getElementById('rawJson').textContent = '';
+    document.getElementById('streamPreview').textContent = '';
+    lastRawJson = '';
+
+    let fullText = '';
+
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ start_date: startDate, end_date: endDate, travelers, budget, interests }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const reader  = res.body.getReader();
+      const decoder = new TextDecoder();
+      let   buf     = '';
+
+      outer: while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop();
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (raw === '[DONE]') break outer;
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed.error) throw new Error(parsed.error);
+            if (parsed.text) {
+              fullText += parsed.text;
+              const prev = document.getElementById('streamPreview');
+              prev.textContent = fullText.slice(-600);
+              prev.scrollTop = prev.scrollHeight;
+            }
+          } catch (pe) {
+            if (pe.message && !pe.message.includes('JSON')) throw pe;
+          }
+        }
+      }
+
+      lastRawJson = fullText;
+      document.getElementById('rawJson').textContent = fullText;
+      renderPlan(fullText);
+
+    } catch (err) {
+      document.getElementById('errorBox').classList.add('on');
+      document.getElementById('errorMsg').textContent = ' ' + err.message;
+    } finally {
+      genBtn.disabled = false;
+      genBtn.textContent = '✨ プランを生成する';
+      document.getElementById('loading').classList.remove('on');
+    }
+  }
+
+  // ── render ──
+  function renderPlan(raw) {
+    let json = raw.trim();
+    // strip markdown fences
+    const fenced = json.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fenced) { json = fenced[1].trim(); }
+    else {
+      const s = json.indexOf('{'), e = json.lastIndexOf('}');
+      if (s !== -1 && e !== -1) json = json.slice(s, e + 1);
+    }
+
+    let plan;
+    try { plan = JSON.parse(json); }
+    catch {
+      document.getElementById('rawJson').classList.add('on');
+      return;
+    }
+
+    const tp  = plan.travel_plan || plan;
+    const out = document.getElementById('output');
+    out.innerHTML = '';
+
+    // ── Plan header ──
+    const ints = (tp.interests || []).join(' · ');
+    out.innerHTML += `
+      <div class="plan-header">
+        <h2>🌊 ${esc(tp.destination || '香川県高松市')} 旅行プラン</h2>
+        <div class="plan-meta">
+          <span>📅 ${esc(tp.dates || '')}</span>
+          <span>👥 ${esc(String(tp.travelers || ''))}名</span>
+          <span>💰 ${esc(tp.budget || '')}</span>
+          ${ints ? `<span>🎯 ${esc(ints)}</span>` : ''}
+        </div>
+      </div>`;
+
+    // ── Itinerary ──
+    for (const day of (tp.itinerary || [])) {
+      const s = day.schedule || {};
+      out.innerHTML += `
+        <div class="day-card">
+          <div class="day-head">
+            <h3>Day ${day.day}　${fmtDate(day.date)}</h3>
+            ${day.theme ? `<span class="day-theme">— ${esc(day.theme)}</span>` : ''}
+          </div>
+          <div class="day-body">
+            ${spotSlot('morning',   '☀️ 午前', s.morning)}
+            ${mealSlot('lunch',     '🍱 ランチ', s.lunch)}
+            ${spotSlot('afternoon', '🌤️ 午後', s.afternoon)}
+            ${mealSlot('dinner',    '🍽️ ディナー', s.dinner)}
+            ${spotSlot('evening',   '🌙 夜', s.evening)}
+          </div>
+        </div>`;
+    }
+
+    // ── Free-time tips ──
+    const ftt = tp.free_time_tips || [];
+    if (ftt.length) {
+      let h = `<div class="tips-card"><h3>⚡ スキマ時間のおすすめ</h3><div class="tips-grid">`;
+      ftt.forEach(t => {
+        h += `<div class="tip-item">
+          <h4>${esc(t.title || '')}</h4>
+          <p>${esc(t.description || '')}</p>
+          ${t.location ? `<div class="tip-loc">📍 ${esc(t.location)}</div>` : ''}
+        </div>`;
+      });
+      out.innerHTML += h + '</div></div>';
+    }
+
+    // ── Local tips ──
+    const lt = tp.local_tips || [];
+    if (lt.length) {
+      let h = `<div class="tips-card"><h3>💡 地元のおすすめ情報</h3><ul class="list-tips">`;
+      lt.forEach(t => { h += `<li>${esc(t)}</li>`; });
+      out.innerHTML += h + '</ul></div>';
+    }
+
+    // ── Packing tips ──
+    const pt = tp.packing_tips || [];
+    if (pt.length) {
+      let h = `<div class="tips-card"><h3>🎒 持ち物チェック</h3><ul class="list-tips">`;
+      pt.forEach(t => { h += `<li>${esc(t)}</li>`; });
+      out.innerHTML += h + '</ul></div>';
+    }
+
+    out.classList.add('on');
+    document.getElementById('actionBar').classList.add('on');
+    out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── slot builders ──
+  function spotSlot(cls, label, data) {
+    if (!data) return '';
+    const sp = data.spot || {};
+    const tr = sp.transport_from_central || {};
+    return `
+      <div class="slot ${cls}">
+        <div class="slot-head">${label}</div>
+        <div class="slot-body">
+          <div class="spot-name">${esc(sp.name || '')}</div>
+          <div class="spot-desc">${esc(sp.description || '')}</div>
+          <div class="badges">
+            ${sp.duration_minutes ? `<span class="badge">⏱ 約${sp.duration_minutes}分</span>` : ''}
+            ${sp.admission        ? `<span class="badge">🎟 ${esc(sp.admission)}</span>` : ''}
+            ${tr.method           ? `<span class="badge">🚶 ${esc(tr.method)}${tr.minutes ? `（約${tr.minutes}分）` : ''}</span>` : ''}
+          </div>
+          ${sp.local_tip ? `<div class="local-tip">📌 ${esc(sp.local_tip)}</div>` : ''}
+          ${data.note    ? `<div class="slot-note">${esc(data.note)}</div>`        : ''}
+        </div>
+      </div>`;
+  }
+
+  function mealSlot(cls, label, r) {
+    if (!r) return '';
+    return `
+      <div class="slot meal">
+        <div class="slot-head">${label}</div>
+        <div class="slot-body">
+          <div class="rest-name">${esc(r.name || '')}</div>
+          <div class="rest-style">${esc(r.style || '')}</div>
+          <div class="badges">
+            ${r.price_per_person ? `<span class="badge">💴 ${esc(r.price_per_person)}/人</span>` : ''}
+            ${r.address          ? `<span class="badge">📍 ${esc(r.address)}</span>` : ''}
+            ${r.transport        ? `<span class="badge">🚶 ${esc(r.transport)}</span>` : ''}
+          </div>
+          ${r.must_order ? `<div class="must-order">⭐ ${esc(r.must_order)}</div>` : ''}
+          ${r.tip        ? `<div class="rest-tip">${esc(r.tip)}</div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  // ── helpers ──
+  function fmtDate(s) {
+    if (!s) return '';
+    try {
+      const d = new Date(s + 'T00:00:00');
+      return `${s} (${'日月火水木金土'[d.getDay()]})`;
+    } catch { return s; }
+  }
+
+  function esc(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+</script>
+</body>
+</html>
